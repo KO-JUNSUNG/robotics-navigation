@@ -1,103 +1,338 @@
-# SLAM / Factor Graph Memo
+# SLAM / Factor Graph Memo — Storyline
 
-> 핵심 복습용 압축 memo. 상세 Socratic dialogue는 저장하지 않는다.
+> 목적: 공식을 암기하는 것이 아니라 **왜 다음 개념이 필요해졌는지**를 다시 떠올리기 위한 복습용 memo.
 
-## 1. Loop closure
+## 0. 출발점 — Odometry만으로 robot trajectory를 만들면?
 
-같은 landmark/장소를 다시 관측하면 과거 pose와 현재 pose 사이에 새로운 constraint가 생긴다.
+Robot pose를
 
-Landmark 관측:
+`T_WRi`
+
+라고 하고, odometry가 `Ri → Ri+1`의 상대 이동을 측정하면:
+
+`T_WR(i+1) = T_WRi T_RiR(i+1)`
+
+따라서 odometry를 계속 composition하면 trajectory를 만들 수 있다.
+
+하지만 각 measurement에 작은 오차가 있으므로:
+
+`T_WR1 → T_WR2 → ... → T_WRN`
+
+으로 갈수록 drift가 누적된다.
+
+**문제:** 한 방향으로 계속 누적되는 relative measurement만으로는 trajectory를 global하게 교정할 방법이 부족하다.
+
+---
+
+## 1. Loop closure — 과거 장소를 다시 보면 무엇이 달라지는가?
+
+R1에서 본 landmark `L`을 R5에서도 다시 봤다고 하자.
+
+같은 물체라면 두 관측이 같은 world point를 설명해야 한다:
 
 `T_WR1 ^R1 p_L ≈ T_WR5 ^R5 p_L`
 
-Residual:
+즉 R1과 R5 사이에 **새로운 constraint**가 생긴다.
 
-`r_L = T_WR1 ^R1 p_L - T_WR5 ^R5 p_L`
-
-관측을 scan matching 등으로 상대 pose constraint로 표현하면:
+이를 landmark constraint로 쓸 수도 있고, scan matching 등으로 상대 pose를 직접 추정하여:
 
 `T_R1R5^loop ≈ T_WR1^{-1} T_WR5`
 
-Loop closure는 odometry drift를 전체 trajectory가 constraint를 함께 만족하도록 보정하게 만든다.
+라는 **loop-closure relative-pose constraint**로 만들 수도 있다.
 
-**주의:** loop closure가 world frame 자체를 고정하는 것은 아니다.
+### 왜 중요한가?
 
-## 2. Pose graph
+Odometry가 만든 긴 chain에 R1 ↔ R5라는 shortcut이 생긴다.
 
-Odometry는 pose-pose constraint:
+`R1 ─ R2 ─ R3 ─ R4 ─ R5`
 
-`z_12 ≈ T_WR1^{-1} T_WR2`
+`└──────── loop ────────┘`
 
-Measurement model:
+이제 optimizer는 기존 odometry와 loop closure를 동시에 만족하도록 전체 trajectory를 조정할 수 있다. 따라서 누적 drift가 trajectory 전체에 걸쳐 보정될 수 있다.
 
-`h(T_WR1,T_WR2) = T_WR1^{-1}T_WR2`
+**주의:** ICP는 주로 두 scan을 registration하여 상대 pose를 추정하는 도구다. "같은 장소인가?"를 찾는 place recognition과 scan registration은 구분한다.
 
-Residual의 개념:
+---
+
+## 2. 그런데 'constraint'를 어떻게 수학적으로 평가할까? — Residual
+
+Odometry measurement를 `z_12`라고 하자.
+
+현재 추정한 두 pose가 만들어내는 예상 relative pose는:
+
+`h(T_WR1,T_WR2) = T_WR1^{-1} T_WR2`
+
+따라서 기본적인 measurement-model 관점에서는:
 
 `r_12 = z_12 - h(X)`
 
-실제 SE(2)/SE(3)에서는 transformation matrix를 단순히 빼기보다 Lie group의 local vector representation을 사용한다.
+즉 **측정값과 현재 state가 예측하는 measurement의 차이**가 residual이다.
 
-## 3. Factor graph
+SLAM의 각 edge/factor는 결국:
 
-각 measurement는 관련된 state variable만 직접 연결한다.
+`measurement → predicted measurement → residual`
 
-`z_12 → (x_1,x_2)`
+이라는 구조를 가진다.
 
-`z_3L → (x_3,l_L)`
+**주의:** SE(2)/SE(3) pose는 일반 Euclidean vector가 아니므로 실제 구현에서는 transformation matrix를 단순히 빼지 않고 relative transform의 Lie-algebra/local-vector representation 등을 사용한다.
 
-같은 landmark를 여러 pose에서 관측하면 여러 pose-landmark factors가 생겨 graph를 연결하고 state를 공동 추정할 수 있다.
+---
 
-Loop closure는 시간적으로 떨어진 pose 사이의 장거리 constraint를 추가한다.
+## 3. Pose Graph — 왜 갑자기 'Graph'가 필요한가?
 
-## 4. Bayesian → optimization
+R1~R5를 각각 독립적으로 추정하는 것이 아니라, **pose들을 node로 보고 measurement를 edge로 연결**하면 문제 구조가 보인다.
 
-SLAM의 목표는 posterior를 추정하는 것:
+`R1 ──odom── R2 ──odom── R3 ──odom── R4 ──odom── R5`
 
-`p(X,L | Z) ∝ p(Z | X,L) p(X,L)`
+Loop closure가 추가되면:
 
-Measurement들이 조건부 독립이면 likelihood는 여러 local factor로 factorization된다.
+`R1 ─────────loop──────── R5`
 
-Gaussian measurement:
+즉:
+
+- **node:** robot pose
+- **edge:** 두 pose 사이의 relative measurement/constraint
+
+이 구조를 **pose graph**라고 부른다.
+
+### 왜 유용한가?
+
+우리가 풀고 싶은 것은 모든 pose를 동시에 조정하는 것:
+
+`X = {T_WR1,...,T_WRN}`
+
+각 edge는 residual `r_i(X)`를 만들고, 전체 trajectory는 모든 edge를 동시에 만족하도록 최적화된다.
+
+---
+
+## 4. 그런데 실제 SLAM에는 pose만 있는 게 아니다 — Landmark가 unknown이다
+
+SLAM에서는 robot pose뿐 아니라 landmark 위치도 모른다.
+
+`x_i = robot pose`
+
+`l_j = landmark`
+
+landmark observation은:
+
+`z_ij = h(x_i,l_j) + v`
+
+즉 하나의 observation은 **pose와 landmark를 함께 연결하는 constraint**다.
+
+예:
+
+`x1 ──odom── x2 ──odom── x3`
+
+`│             │`
+
+`└── landmark L ┘`
+
+한 번의 관측만으로는 unknown이 충분히 결정되지 않을 수 있지만, 여러 pose에서 같은 landmark를 관측하면 여러 constraint가 서로 연결되어 전체 graph의 state를 공동으로 추정할 수 있다.
+
+**중요:** 같은 landmark를 반복 관측하는 것 자체를 모두 loop closure라고 부르지는 않는다. Loop closure는 보통 시간적으로 떨어진 과거 장소/pose와 현재 pose를 연결하는 장거리 constraint를 의미한다.
+
+---
+
+## 5. Factor Graph — Pose Graph에서 왜 확장되는가?
+
+Pose graph는 **pose만 unknown으로 두는 경우**를 표현하기 좋다.
+
+하지만 SLAM에서는 landmark도 unknown이다.
+
+따라서 graph의 node를 단순히 pose만으로 제한하지 않고, **state variable과 measurement factor의 관계**로 표현한다.
+
+예:
+
+`z_12 → (x1,x2)`  : odometry factor
+
+`z_3L → (x3,L)`    : landmark observation factor
+
+즉:
+
+- **variable node:** pose, landmark 등 우리가 추정할 unknown
+- **factor:** 특정 variable들을 직접 연결하는 measurement/probabilistic constraint
+
+이것이 **factor graph**다.
+
+### 핵심 차이
+
+**Pose graph:**
+
+`pose ─ measurement ─ pose`
+
+**Factor graph:**
+
+`variable(s) ─ factor ─ variable(s)`
+
+따라서 pose graph는 factor graph의 한 특수한 형태로 생각할 수 있다.
+
+---
+
+## 6. Factor는 왜 '확률'이 되는가? — 센서는 noisy하다
+
+실제 measurement는 정확한 equality constraint가 아니다:
+
+`z_i = h_i(X) + v_i`
+
+Gaussian noise를 가정하면:
 
 `z_i ~ N(h_i(X), Σ_i)`
 
-그러면 MAP/MLE는 weighted nonlinear least squares 형태로 연결된다:
+따라서 각 factor는 단순한 선이 아니라 **현재 state가 measurement를 얼마나 잘 설명하는지에 대한 likelihood**를 제공한다.
+
+전체 measurement가 조건부 독립이면:
+
+`p(Z|X) = ∏_i p(z_i|X_i)`
+
+이처럼 전체 likelihood를 여러 local factor로 분해할 수 있다.
+
+---
+
+## 7. Bayesian → MLE/MAP → Weighted Nonlinear Least Squares
+
+우리가 원하는 것은 state의 posterior:
+
+`p(X|Z) ∝ p(Z|X)p(X)`
+
+- `p(Z|X)`: sensor measurement가 현재 state에서 얼마나 그럴듯한가
+- `p(X)`: prior
+
+Gaussian likelihood를 사용하면 negative log-likelihood가 residual의 quadratic form이 된다:
+
+`r_i^T Σ_i^{-1} r_i`
+
+따라서 MLE/MAP estimation은 다음 optimization으로 연결된다:
 
 `X* = argmin_X Σ_i r_i^T Σ_i^{-1} r_i`
 
-- `Σ_i`: uncertainty / covariance
+즉:
+
+`Gaussian → likelihood → MLE/MAP → Weighted Nonlinear Least Squares`
+
+여기서:
+
+- `Σ_i`: covariance / uncertainty
 - `Σ_i^{-1}`: information matrix / weight
-- 신뢰도가 높은 measurement(작은 covariance)는 더 강하게 반영된다.
+- 작은 uncertainty → 큰 weight → 더 강한 constraint
 
-핵심 연결:
+---
 
-`Gaussian → likelihood → MAP/MLE → weighted nonlinear least squares → factor graph optimization`
+## 8. '왜 여러 constraint가 전체 trajectory를 바꾸는가?' — Joint optimization
 
-## 5. DOF / observability / gauge freedom
+최적화 대상은 특정 pose 하나가 아니라 전체 state:
 
-Measurement 하나가 state의 모든 자유도를 결정하지는 않는다.
+`X = {x1,x2,...,xN,L1,L2,...}`
+
+목적함수는 모든 factor의 cost를 합친다:
+
+`J(X) = Σ_i r_i(X)^T Ω_i r_i(X)`
+
+따라서 optimizer는 한 constraint만 만족시키는 것이 아니라 **전체 constraint의 cost가 가장 작아지는 joint solution**을 찾는다.
+
+오차가 반드시 균등하게 분산되는 것은 아니다. 각 factor의 covariance/information에 따라 신뢰도가 높은 constraint를 더 강하게 만족시키는 방향으로 solution이 정해진다.
+
+---
+
+## 9. DOF / Observability — constraint가 자유도를 얼마나 줄이는가?
+
+state가 가진 자유도보다 measurement가 제공하는 독립적인 constraint가 부족하면 state를 유일하게 결정할 수 없다.
+
+Measurement model:
+
+`z = h(X)`
+
+local linearization:
+
+`δz ≈ H δX`
 
 `H = ∂h/∂X`
 
-Jacobian의 rank는 locally independent constraint가 state를 얼마나 제약하는지와 관련된다.
+Jacobian의 rank는 locally 독립적인 constraint가 몇 개의 state 방향을 관측하는지와 관련된다.
 
-SLAM에서는 전체 world frame을 통째로 같은 rigid transformation `G`로 바꿔도 relative constraints가 변하지 않는다:
+즉:
+
+`rank(H)` ↔ locally constrained directions
+
+`null(H)` ↔ locally unobservable directions
+
+이 관점이 이후 EKF observability와 SLAM의 gauge freedom을 연결한다.
+
+---
+
+## 10. Gauge Freedom — 왜 모든 상대 constraint를 알아도 world가 고정되지 않는가?
+
+모든 pose에 동일한 rigid transform `G`를 적용:
 
 `T'_Wi = G T_Wi`
 
-따라서 gauge freedom이 존재한다.
+그러면 relative pose는:
 
-보통 첫 pose를 고정:
+`(T'_Wi)^{-1} T'_Wj = T_Wi^{-1} T_Wj`
+
+로 그대로다.
+
+따라서 relative measurement만으로는 전체 trajectory의 **absolute position/orientation**을 결정할 수 없다.
+
+이것이 gauge freedom이다.
+
+Loop closure를 추가해도 이 성질은 사라지지 않는다. Loop closure는 drift를 줄이지, world frame 자체를 정의하지 않는다.
+
+보통 첫 pose를:
 
 `T_WR1 = I`
 
-이것이 gauge fixing이다.
+로 고정하여 gauge를 제거한다. → **gauge fixing**
 
-**Loop closure는 drift를 줄이지만 gauge freedom을 자동으로 제거하지 않는다.**
+---
 
-## 6. 핵심 mental model
+# 최종 mental model
 
-`Sensor → measurement z → measurement model h(X) → residual r → uncertainty Σ → weighted cost → optimization`
+처음 문제:
 
-SLAM은 로봇 pose와 landmark라는 unknown들을 여러 sensor constraint로 연결하고, 전체 constraint를 가장 잘 만족하는 상태를 추정하는 nonlinear estimation problem이다.
+`odometry → trajectory → accumulated drift`
+
+↓
+
+과거 장소를 다시 봄:
+
+`loop closure → 새로운 global constraint`
+
+↓
+
+pose를 node, constraint를 edge로 표현:
+
+`pose graph`
+
+↓
+
+landmark도 unknown이므로 pose + landmark + measurement factor로 확장:
+
+`factor graph`
+
+↓
+
+센서는 noisy하므로 constraint를 확률적으로 표현:
+
+`likelihood / covariance`
+
+↓
+
+Bayesian estimation을 Gaussian assumption으로 전개:
+
+`MLE/MAP → weighted nonlinear least squares`
+
+↓
+
+모든 factor를 동시에 최소화:
+
+`joint optimization`
+
+↓
+
+하지만 relative constraints만으로는 world frame이 임의적:
+
+`gauge freedom → gauge fixing`
+
+## 한 줄 요약
+
+**SLAM은 noisy sensor가 제공하는 local relative constraints를 pose/landmark 사이의 factor로 연결하고, 그 모든 constraint를 동시에 가장 잘 만족하는 상태를 nonlinear optimization으로 추정하는 문제다.**
