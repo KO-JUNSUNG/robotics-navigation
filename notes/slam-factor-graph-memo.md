@@ -4,13 +4,21 @@
 
 ## 0. 출발점 — Odometry만으로 robot trajectory를 만들면?
 
-Robot pose를 `T_WRi`라고 하고, odometry가 `Ri → Ri+1`의 상대 이동을 측정하면:
+Robot pose를
+
+`T_WRi`
+
+라고 하고, odometry가 `Ri → Ri+1`의 상대 이동을 측정하면:
 
 `T_WR(i+1) = T_WRi T_RiR(i+1)`
 
 따라서 odometry를 계속 composition하면 trajectory를 만들 수 있다.
 
-하지만 각 measurement에 작은 오차가 있으므로 trajectory가 길어질수록 drift가 누적된다.
+하지만 각 measurement에 작은 오차가 있으므로:
+
+`T_WR1 → T_WR2 → ... → T_WRN`
+
+으로 갈수록 drift가 누적된다.
 
 **문제:** 한 방향으로 계속 누적되는 relative measurement만으로는 trajectory를 global하게 교정할 방법이 부족하다.
 
@@ -24,13 +32,13 @@ R1에서 본 landmark `L`을 R5에서도 다시 봤다고 하자.
 
 `T_WR1 ^R1 p_L ≈ T_WR5 ^R5 p_L`
 
-즉 R1과 R5 사이에 **새로운 long-range constraint**가 생긴다.
+즉 R1과 R5 사이에 **새로운 constraint**가 생긴다.
 
 이를 landmark constraint로 쓸 수도 있고, scan matching 등으로 상대 pose를 직접 추정하여:
 
 `T_R1R5^loop ≈ T_WR1^{-1} T_WR5`
 
-라는 loop-closure relative-pose constraint로 만들 수도 있다.
+라는 **loop-closure relative-pose constraint**로 만들 수도 있다.
 
 ### 왜 중요한가?
 
@@ -46,7 +54,7 @@ Odometry가 만든 긴 chain에 R1 ↔ R5라는 shortcut이 생긴다.
 
 ---
 
-## 2. Constraint를 어떻게 평가할까? — Residual
+## 2. 그런데 'constraint'를 어떻게 수학적으로 평가할까? — Residual
 
 Odometry measurement를 `z_12`라고 하자.
 
@@ -70,7 +78,7 @@ SLAM의 각 edge/factor는 결국:
 
 ---
 
-## 3. Pose Graph — 왜 Graph가 필요한가?
+## 3. Pose Graph — 왜 갑자기 'Graph'가 필요한가?
 
 R1~R5를 각각 독립적으로 추정하는 것이 아니라, **pose들을 node로 보고 measurement를 edge로 연결**하면 문제 구조가 보인다.
 
@@ -85,7 +93,7 @@ Loop closure가 추가되면:
 - **node:** robot pose
 - **edge:** 두 pose 사이의 relative measurement/constraint
 
-이 구조를 **pose graph**라고 한다.
+이 구조를 **pose graph**라고 부른다.
 
 ### 왜 유용한가?
 
@@ -111,11 +119,27 @@ landmark observation은:
 
 즉 하나의 observation은 **pose와 landmark를 함께 연결하는 constraint**다.
 
-### Pose Graph → Factor Graph
+예:
 
-Pose graph는 pose만 unknown으로 두는 경우를 표현하기 좋다.
+`x1 ──odom── x2 ──odom── x3`
 
-하지만 SLAM에서는 landmark도 unknown이다. 따라서 graph를 **state variable과 measurement factor의 관계**로 표현한다.
+`│             │`
+
+`└── landmark L ┘`
+
+한 번의 관측만으로는 unknown이 충분히 결정되지 않을 수 있지만, 여러 pose에서 같은 landmark를 관측하면 여러 constraint가 서로 연결되어 전체 graph의 state를 공동으로 추정할 수 있다.
+
+**중요:** 같은 landmark를 반복 관측하는 것 자체를 모두 loop closure라고 부르지는 않는다. Loop closure는 보통 시간적으로 떨어진 과거 장소/pose와 현재 pose를 연결하는 장거리 constraint를 의미한다.
+
+---
+
+## 5. Factor Graph — Pose Graph에서 왜 확장되는가?
+
+Pose graph는 **pose만 unknown으로 두는 경우**를 표현하기 좋다.
+
+하지만 SLAM에서는 landmark도 unknown이다.
+
+따라서 graph의 node를 단순히 pose만으로 제한하지 않고, **state variable과 measurement factor의 관계**로 표현한다.
 
 예:
 
@@ -123,18 +147,28 @@ Pose graph는 pose만 unknown으로 두는 경우를 표현하기 좋다.
 
 `z_3L → (x3,L)`    : landmark observation factor
 
+즉:
+
 - **variable node:** pose, landmark 등 우리가 추정할 unknown
 - **factor:** 특정 variable들을 직접 연결하는 measurement/probabilistic constraint
 
 이것이 **factor graph**다.
 
-Pose graph는 pose만 variable로 두는 factor graph의 특수한 경우로 볼 수 있다.
+### 핵심 차이
 
-**주의:** 같은 landmark를 반복 관측하는 것 자체를 모두 loop closure라고 부르지는 않는다. Loop closure는 보통 시간적으로 떨어진 과거 장소/pose와 현재 pose를 연결하는 장거리 constraint를 의미한다.
+**Pose graph:**
+
+`pose ─ measurement ─ pose`
+
+**Factor graph:**
+
+`variable(s) ─ factor ─ variable(s)`
+
+따라서 pose graph는 factor graph의 한 특수한 형태로 생각할 수 있다.
 
 ---
 
-## 5. Factor는 왜 확률이 되는가? — 센서는 noisy하다
+## 6. Factor는 왜 '확률'이 되는가? — 센서는 noisy하다
 
 실제 measurement는 정확한 equality constraint가 아니다:
 
@@ -154,7 +188,7 @@ Gaussian noise를 가정하면:
 
 ---
 
-## 6. Bayesian → MLE/MAP → Weighted Nonlinear Least Squares
+## 7. Bayesian → MLE/MAP → Weighted Nonlinear Least Squares
 
 우리가 원하는 것은 state의 posterior:
 
@@ -183,7 +217,7 @@ Gaussian likelihood를 사용하면 negative log-likelihood가 residual의 quadr
 
 ---
 
-## 7. Joint optimization — 왜 constraint 하나가 전체 trajectory를 바꾸는가?
+## 8. '왜 여러 constraint가 전체 trajectory를 바꾸는가?' — Joint optimization
 
 최적화 대상은 특정 pose 하나가 아니라 전체 state:
 
@@ -199,186 +233,7 @@ Gaussian likelihood를 사용하면 negative log-likelihood가 residual의 quadr
 
 ---
 
-## 8. Nonlinear optimization — 왜 Jacobian과 linearization이 필요한가?
-
-SLAM의 residual은 SE(2)/SE(3) geometry 등으로 인해 일반적으로 nonlinear이다.
-
-현재 estimate를 `X_k`라 하고 작은 state update를 `ΔX`라 하면:
-
-`r(X_k + ΔX) ≈ r(X_k) + J ΔX`
-
-로 local linearization한다.
-
-핵심은 **nonlinear 문제를 현재 estimate 주변의 local linear problem으로 바꾸어 반복적으로 풀 수 있게 하는 것**이다.
-
-Linearization은 현재 점 주변에서만 잘 맞으므로 iterative optimization이 필요하다:
-
-`현재 X_k → linearize → J 계산 → linear problem 해결 → ΔX 계산 → X_{k+1} = X_k + ΔX → 다시 linearize → 반복`
-
-Gauss-Newton은 이 과정에서 사용하는 대표적인 방법이며, 이미 알고 있는 최적화 지식과 SLAM의 factor 구조를 연결하는 역할로 이해한다.
-
----
-
-## 9. Jacobian — residual sensitivity
-
-Jacobian은 단순한 편미분 행렬이 아니라,
-
-> **각 state를 조금 움직였을 때 특정 measurement residual이 얼마나, 어느 방향으로 변하는지를 나타내는 local sensitivity map**
-
-이다.
-
-간단한 예:
-
-`r(x1,x2) = 5 - (x2 - x1) = 5 - x2 + x1`
-
-따라서:
-
-`∂r/∂x1 = +1`
-
-`∂r/∂x2 = -1`
-
-즉 `x1`을 +1 움직이면 residual은 +1 변하고, `x2`를 +1 움직이면 residual은 -1 변한다.
-
-일반적으로:
-
-`Δr ≈ J ΔX`
-
-이며, 이것이 state update와 residual change를 연결한다.
-
----
-
-## 10. Factor Graph → Sparse Jacobian
-
-이제 factor graph의 연결 구조가 계산 구조로 이어진다.
-
-예:
-
-`x1 ── x2 ── x3`
-
-factor가:
-
-`r12 = r12(x1,x2)`
-
-`r23 = r23(x2,x3)`
-
-라면 전체 Jacobian은 구조적으로:
-
-`J = [ *  *  0`
-`      0  *  * ]`
-
-이다.
-
-왜냐하면 `r23`은 `x1`과 아무 관계가 없으므로:
-
-`∂r23/∂x1 = 0`
-
-이고 `r12`는 `x3`와 관계가 없으므로:
-
-`∂r12/∂x3 = 0`
-
-이다.
-
-즉:
-
-`Factor Graph의 local connectivity`
-
-`→ Jacobian의 non-zero structure`
-
-`→ Jacobian sparsity`
-
-가 된다.
-
-**중요:** 이 sparsity는 우연히 생기는 것이 아니라 factor가 어떤 variable에 의존하는지가 그대로 반영된 결과다.
-
----
-
-## 11. Sparse Jacobian → Sparse Hessian / Information Matrix
-
-Gauss-Newton에서 linearized problem을 풀면 보통:
-
-`H ΔX = -g`
-
-형태의 선형 시스템이 나오고,
-
-`H ≈ J^T Ω J`
-
-이다.
-
-여기서 `H`는 Gauss-Newton Hessian approximation으로 볼 수 있으며 information structure와 밀접하게 연결된다.
-
-예를 들어:
-
-`x1 ── x2 ── x3`
-
-이면 구조적으로:
-
-`H ≈ [ *  *  0`
-`      *  *  *`
-`      0  *  * ]`
-
-같은 형태가 나타난다.
-
-`x1`과 `x3`가 하나의 factor에서 직접 함께 제약되지 않기 때문에 해당 coupling이 직접적으로 생기지 않는다는 것이 핵심 직관이다.
-
-따라서:
-
-`Factor Graph connectivity`
-
-`→ Jacobian sparsity`
-
-`→ Hessian / information matrix sparsity`
-
-라는 연결이 성립한다.
-
----
-
-## 12. 왜 sparsity가 실제 SLAM에서 중요한가?
-
-실제 SLAM에서는 pose가 수천~수만 개가 될 수 있다.
-
-하지만 각 measurement는 보통 소수의 variable만 연결한다.
-
-따라서 전체 Jacobian/Hessian은 **크기는 매우 크지만 대부분이 0인 sparse matrix**가 된다.
-
-이 sparse structure를 이용하면 거대한 dense matrix를 그대로 다루는 것보다 훨씬 효율적으로 optimization을 수행할 수 있다.
-
-즉 Factor Graph는 단순한 visualization이 아니다.
-
-> **Factor Graph의 connectivity는 대규모 SLAM optimization의 계산 구조를 제공하고, 그 sparsity를 이용하기 때문에 큰 문제를 실제로 풀 수 있다.**
-
----
-
-## 13. Variable Elimination → Fill-in의 첫 직관
-
-다음 구조를 보자:
-
-`x1 ── x2 ── x3`
-
-`x2`는 `x1`과 연결된 factor와 `x3`와 연결된 factor에 **동시에 참여하는 중간 variable**이다.
-
-따라서 `x2`를 eliminate하면 `x2`가 가지고 있던 두 관계의 효과를 `x1`과 `x3` 사이의 effective constraint로 표현할 수 있다.
-
-개념적으로:
-
-`제거 전: x1 -- x2 -- x3`
-
-`제거 후: x1 -------- x3`
-
-원래 graph에 없던 coupling이 elimination 과정에서 새로 나타나는 것을 **fill-in**이라고 한다.
-
-**중요한 오개념:** fill-in은 단순히 pose가 시간 순서로 연속되어 있기 때문에 생기는 것이 아니다. 핵심은 **제거되는 variable이 여러 factor를 통해 주변 variable들을 연결하고 있었기 때문**이다.
-
-같은 현상은 landmark에서도 나타날 수 있다:
-
-`x1 -- L -- x2`
-
-에서 landmark `L`을 제거하면 `x1`과 `x2` 사이에 effective coupling이 생길 수 있다.
-
-여기까지가 현재 학습한 범위다. **Schur complement와 marginalization은 아직 본격적으로 배우지 않았으므로 이 memo에서는 결론만 미리 적지 않는다.**
-
----
-
-## 14. DOF / Observability와 Gauge Freedom
+## 9. DOF / Observability — constraint가 자유도를 얼마나 줄이는가?
 
 state가 가진 자유도보다 measurement가 제공하는 독립적인 constraint가 부족하면 state를 유일하게 결정할 수 없다.
 
@@ -394,19 +249,33 @@ local linearization:
 
 Jacobian의 rank는 locally 독립적인 constraint가 몇 개의 state 방향을 관측하는지와 관련된다.
 
+즉:
+
 `rank(H)` ↔ locally constrained directions
 
 `null(H)` ↔ locally unobservable directions
 
-SLAM에서는 relative measurement만으로 world frame의 absolute position/orientation이 결정되지 않는 gauge freedom이 대표적인 예다.
+이 관점이 이후 EKF observability와 SLAM의 gauge freedom을 연결한다.
 
-모든 pose에 동일한 rigid transform `G`를 적용해도:
+---
 
-`(G T_Wi)^{-1}(G T_Wj) = T_Wi^{-1}T_Wj`
+## 10. Gauge Freedom — 왜 모든 상대 constraint를 알아도 world가 고정되지 않는가?
 
-이므로 모든 relative constraint가 그대로다.
+모든 pose에 동일한 rigid transform `G`를 적용:
 
-따라서 loop closure가 있어도 gauge freedom은 사라지지 않는다.
+`T'_Wi = G T_Wi`
+
+그러면 relative pose는:
+
+`(T'_Wi)^{-1} T'_Wj = T_Wi^{-1} T_Wj`
+
+로 그대로다.
+
+따라서 relative measurement만으로는 전체 trajectory의 **absolute position/orientation**을 결정할 수 없다.
+
+이것이 gauge freedom이다.
+
+Loop closure를 추가해도 이 성질은 사라지지 않는다. Loop closure는 drift를 줄이지, world frame 자체를 정의하지 않는다.
 
 보통 첫 pose를:
 
@@ -416,7 +285,7 @@ SLAM에서는 relative measurement만으로 world frame의 absolute position/ori
 
 ---
 
-# Final mental model
+# 최종 mental model
 
 처음 문제:
 
@@ -460,34 +329,10 @@ Bayesian estimation을 Gaussian assumption으로 전개:
 
 ↓
 
-nonlinear이므로 현재 estimate 주변에서 linearize:
+하지만 relative constraints만으로는 world frame이 임의적:
 
-`Jacobian → Gauss-Newton`
-
-↓
-
-각 factor는 일부 variable만 보므로:
-
-`Sparse Jacobian → Sparse Hessian / Information Matrix`
-
-↓
-
-이 sparse structure를 이용해 대규모 문제를 효율적으로 풀 수 있음
-
-↓
-
-하지만 variable을 제거하면 주변 variable 사이에 새 coupling이 생길 수 있음:
-
-`Variable elimination → fill-in`
-
-↓
-
-**다음:**
-
-`Schur complement → landmark elimination → marginalization → Bundle Adjustment / VIO`
-
----
+`gauge freedom → gauge fixing`
 
 ## 한 줄 요약
 
-**SLAM은 noisy sensor가 제공하는 local relative constraints를 pose/landmark 사이의 factor로 연결하고, 그 모든 constraint를 동시에 가장 잘 만족하는 상태를 nonlinear optimization으로 추정하는 문제이며, Factor Graph의 local connectivity가 Jacobian/Hessian의 sparsity를 만들어 대규모 문제를 효율적으로 풀 수 있게 한다.**
+**SLAM은 noisy sensor가 제공하는 local relative constraints를 pose/landmark 사이의 factor로 연결하고, 그 모든 constraint를 동시에 가장 잘 만족하는 상태를 nonlinear optimization으로 추정하는 문제다.**
