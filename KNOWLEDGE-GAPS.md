@@ -15,7 +15,7 @@ This file tracks the learner's current understanding. It should be updated as mi
 - [x] Sensor confidence ↔ covariance / information intuition
 - [x] Basic Kalman-filter concept
 - [x] Why IMU integration drifts
-- [x] Constant accelerometer bias can produce approximately (t^2) position error
+- [x] Constant accelerometer bias can produce approximately `t^2` position error
 - [x] Localization and mapping are coupled
 - [x] State/process model vs measurement model distinction
 - [x] PX4 Offboard autonomous-flight experience
@@ -44,7 +44,7 @@ This file tracks the learner's current understanding. It should be updated as mi
 
 ## Partially Known / Needs Reinforcement
 
-- [ ] Ground-robot differential-drive kinematics — current frontier; turning direction and wheelbase intuition are present, but exact (v,omega) relationships and angular-velocity meaning need consolidation
+- [ ] Ground-robot differential-drive kinematics — current frontier; turning direction and wheelbase intuition are present, but exact `v`, `omega` relationships and angular-velocity meaning need consolidation
 - [ ] Wheel odometry integration into an SE(2) pose
 - [ ] Wheel-odometry assumptions, covariance, systematic errors, and slip failure modes
 - [ ] SO(3) / SE(3) generalization from the established SO(2) / SE(2) model
@@ -104,7 +104,7 @@ Correction: monocular VO/SLAM is possible. A central limitation is metric-scale 
 
 Initial belief: inverse should exist because a transformation needs to be one-to-one.
 
-Correction: for a rotation matrix, `R^-1 = R^T` because (R) is orthonormal.
+Correction: for a rotation matrix, `R^-1 = R^T` because `R` is orthonormal.
 
 ### IMU and process model
 
@@ -116,7 +116,7 @@ Correction: IMU produces measurements; estimators commonly use those measurement
 
 Initial belief: odometry error grows as (t^2) in general.
 
-Correction: a constant acceleration bias gives a (t^2) position-error term. Different error sources have different growth characteristics.
+Correction: a constant acceleration bias gives a `t^2` position-error term. Different error sources have different growth characteristics.
 
 ## Current Focus
 
