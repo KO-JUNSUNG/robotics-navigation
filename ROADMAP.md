@@ -8,8 +8,8 @@ Goal: build the theoretical and practical foundation required to design and appl
 |---|---:|---|---|
 | 2026-08-18 | 0 | Initial diagnostic, SLAM overview | Completed |
 | 2026-08-19 | 1 | Coordinate frames, rigid-body transformations | Completed for 2D / SE(2) |
-| 2026-08-20 | 2 | SO(3), SE(3), rotation mathematics | SO(2) completed; SO(3) / SE(3) pending |
-| 2026-08-21 | 3 | Ground robot kinematics, odometry, motion models | **Current frontier — in progress** |
+| 2026-08-20 | 2 | SO(3), SE(3), rotation mathematics | **SO(3) foundations in progress; SE(3) pending** |
+| 2026-08-21 | 3 | Ground robot kinematics, odometry, motion models | Completed for differential drive and wheel odometry foundation |
 | 2026-08-22 | 4 | Bayesian state estimation, MAP/MLE, Gaussian uncertainty | Conceptual foundation completed |
 | 2026-08-23 | 5 | Kalman Filter, EKF, ESKF | Basic KF intuition established; EKF / ESKF pending |
 | 2026-08-24 | 6 | Nonlinear least squares, Gauss-Newton, LM | Nonlinear least squares, linearization, and Gauss-Newton structure completed conceptually; LM pending |
@@ -27,12 +27,11 @@ Goal: build the theoretical and practical foundation required to design and appl
 The next active prerequisite chain is:
 
 ```text
-SE(2) pose and relative transforms
-→ differential-drive kinematics
-→ wheel odometry integration
-→ motion assumptions and nonholonomic constraint
-→ wheel-odometry error and failure modes
-→ probabilistic motion model / estimator connection
+completed differential-drive and wheel-odometry foundation
+→ SO(3) rotation geometry
+→ SE(3) rigid-body transformations
+→ IMU / LiDAR frame applications
+→ EKF / ESKF with concrete motion and measurement models
 ```
 
 The learner already has a working conceptual understanding of:
@@ -44,18 +43,20 @@ The learner already has a working conceptual understanding of:
 - Linearization, Jacobian sensitivity, Gauss-Newton Hessian sparsity.
 - Variable elimination, fill-in, Schur complement, and landmark elimination in Bundle Adjustment.
 - Marginalization, marginalization priors, sliding-window VIO, and the local-estimator/global-pose-graph distinction.
+- Differential-drive kinematics, turning radius, and wheel-encoder odometry integration.
+- Nonholonomic constraints, wheel slip, calibration errors, multi-sensor disagreement, and first-order covariance propagation.
 
 These topics should be connected briefly when useful rather than automatically retaught. Advanced backend topics such as Bayes Tree, iSAM2, FEJ, and detailed elimination ordering remain deferred until a practical need or prerequisite chain justifies them.
 
 ## Near-term Sequence
 
-1. Ground-robot kinematics and wheel odometry.
-2. SO(3) / SE(3), when needed to generalize the established SE(2) frame model.
-3. EKF / ESKF and robotics linearization, grounded in an actual motion and measurement model.
-4. LiDAR geometry, scan matching, and ICP for a ground robot.
-5. Camera and visual-odometry prerequisites.
-6. IMU fusion, VIO / LIO, and practical SLAM architecture.
-7. Sensor/stack selection, experiment design, and capstone system design.
+1. Complete SO(3) foundations without overfocusing on Euler-angle conventions.
+2. Extend SE(2) frame reasoning to SE(3) and apply it to IMU / LiDAR extrinsics.
+3. Study EKF / ESKF and robotics linearization using concrete ground-robot motion and measurement models.
+4. Study LiDAR geometry, scan matching, and ICP for a ground robot.
+5. Build camera and visual-odometry prerequisites.
+6. Study IMU fusion, VIO / LIO, and practical SLAM architecture.
+7. Perform sensor/stack selection, experiment design, and capstone system design.
 
 This sequence is prerequisite-driven. It is not necessary to follow the original calendar dates literally.
 
