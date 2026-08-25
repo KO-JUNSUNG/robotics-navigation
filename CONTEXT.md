@@ -72,6 +72,10 @@ For a differential-drive ground robot, the learner can connect wheel-encoder inc
 - Understands factor graphs through sparse Gauss-Newton structure, elimination, Schur complement, and marginalization.
 - Understands differential-drive kinematics, wheel odometry, nonholonomic assumptions, and major slip/calibration failure modes.
 - Can connect motion-model Jacobians to covariance propagation, especially yaw uncertainty to lateral position uncertainty.
+- Understands SO(3) / SE(3) frame transformations, inverse transforms, and LiDAR extrinsic / lever-arm effects.
+- Understands accelerometer specific force, stationary versus free-fall measurements, and gravity-based roll/pitch but not yaw observability.
+- Understands gyro bias accumulation and why bias must be estimated as a changing state.
+- Understands the ESKF nominal/error-state architecture, injection/reset, covariance preservation, and Kalman-gain trust behavior.
 
 ## Important Corrected Misconceptions
 
@@ -80,9 +84,12 @@ For a differential-drive ground robot, the learner can connect wheel-encoder inc
 - Kalman filtering and MAP estimation are closely related under particular assumptions, but should not be treated as universally identical.
 - Rotation inverse equals transpose because rotation matrices are orthonormal, not merely because a transformation should be one-to-one.
 - Odometry error does not universally grow as t^2; constant acceleration bias gives a t^2 position-error term, while other error sources have different behavior.
+- Free-fall accelerometer output is zero not because gravity disappears, but because the IMU accelerates with gravity and experiences no supporting specific force.
+- Resetting the ESKF error-state mean to zero after injection does not mean state uncertainty is zero; covariance must remain and be transformed consistently.
+- A large measurement residual does not make the measurement Jacobian large. Residual magnitude, sensitivity (H), state covariance (P), and measurement covariance (R) play different roles.
 
 ## Current Curriculum Position
 
-As of 2026-08-25, the learner has completed the ground-robot differential-drive and wheel-odometry foundation, including practical failure modes and first-order covariance propagation. The current topic is extending the established SE(2) frame model to SO(3), followed by SE(3).
+As of 2026-08-25, the learner has completed the ground-robot differential-drive / wheel-odometry foundation and the introductory SO(3) / SE(3) frame-transformation unit. LiDAR extrinsics, lever-arm effects, accelerometer specific force, gravity-based attitude observability, and body-frame gyro composition are understood conceptually.
 
-SO(3) rotation-matrix meaning, orthonormality, determinant, axis columns, inverse/transpose, and noncommutativity have introductory working understanding. Body-fixed versus world-fixed incremental rotation composition remains unresolved and should be revisited when gyro integration supplies a concrete implementation need.
+The learner has progressed into ESKF foundations: nominal versus error state, bias-state motivation, orientation-error injection on SO(3), error-mean reset, covariance preservation, Kalman gain, and overconfidence. The active frontier is how IMU propagation creates state cross-correlations and how wheel / LiDAR measurements use them to correct indirectly observed states such as gyro bias. Full ESKF Jacobians and implementation remain pending.
