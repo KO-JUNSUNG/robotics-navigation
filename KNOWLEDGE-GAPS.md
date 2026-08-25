@@ -123,7 +123,7 @@ Correction: IMU produces measurements; estimators commonly use those measurement
 
 ### Odometry error growth
 
-Initial belief: odometry error grows as (t^2) in general.
+Initial belief: odometry error grows as `t^2` in general.
 
 Correction: a constant acceleration bias gives a `t^2` position-error term. Different error sources have different growth characteristics.
 

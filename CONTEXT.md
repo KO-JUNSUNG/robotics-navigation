@@ -23,9 +23,9 @@ Do not turn every session into a lecture. The learner should do substantial reas
 - Bachelor's degree in Statistics.
 - Master's degree in Artificial Intelligence.
 - Has successfully autonomously flown a drone using PX4 Offboard mode.
-- Has practical exposure to autonomous systems but limited formal robotics navigation knowledge.
-- Especially unfamiliar with SLAM.
-- Has heard the concept that SLAM can involve VIO + mapping, but this is not yet a reliable mental model.
+- Entered this repository with practical autonomous-systems experience but limited formal robotics navigation and SLAM knowledge.
+- Has since built a coherent foundation spanning frame geometry, wheel odometry, factor-graph optimization, SO(3) / SE(3), sensor extrinsics, and introductory ESKF reasoning.
+- Should still be treated as early in implementation-level SLAM, sensor front ends, observability analysis, ROS 2 stack integration, and system evaluation.
 - Comfortable with probability/statistics concepts, Bayesian reasoning, and machine learning.
 - Does not particularly enjoy tedious hand calculations; calculations should be used when they clarify a concept rather than as repetitive drills.
 
@@ -35,7 +35,7 @@ The learner needs to apply SLAM to a ground robot. The curriculum should therefo
 
 ## Important Teaching Constraints
 
-- Do not assume prior knowledge of robotics navigation.
+- Do not assume knowledge beyond the established frontier recorded in the current notes and tracking documents.
 - Do not unnecessarily reteach undergraduate probability/statistics.
 - Correct terminology and frame conventions carefully.
 - Distinguish intuition from mathematically precise statements.

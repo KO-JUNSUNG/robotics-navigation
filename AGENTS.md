@@ -121,39 +121,44 @@ Update tracking documents deliberately when the evidence has changed; do not dup
 
 Before modifying an existing Markdown file:
 
-1. Read the current remote file.
-2. Understand its purpose and relationship to nearby documents.
-3. Preserve existing content unless the user explicitly asks to replace it.
-4. Prefer careful integration or appending where appropriate.
-5. Do not overwrite an existing long-term memo with a session summary.
+1. Inspect the local working tree with `git status` and preserve unrelated or uncommitted user work.
+2. Synchronize the local branch with GitHub before editing when the working tree is clean; prefer `git pull --ff-only` after confirming the intended branch.
+3. Read the current local file after synchronization.
+4. Understand its purpose and relationship to nearby documents.
+5. Preserve existing content unless the user explicitly asks to replace it.
+6. Prefer careful integration or appending where appropriate.
+7. Do not overwrite an existing long-term memo with a session summary.
 
 If new material is a continuous refinement of an existing concept, update the relevant memo carefully. If it forms a distinct conceptual unit, create a separate note.
 
 ## GitHub workflow
 
-Use the connected GitHub repository as the source of truth:
+The primary working copy is the Codex project opened at:
+
+`C:\Users\My\Documents\robotics-navigation`
+
+The corresponding GitHub repository is:
 
 `KO-JUNSUNG/robotics-navigation`
 
-When using the GitHub integration:
+Use a **local-first Git workflow** by default:
 
-- read the current remote file and identify the target branch before editing
-- avoid overwriting unrelated or newer content
-- preserve the role and structure of existing documents
-- use clear, specific commit messages
-- report the changed files
-- report the resulting commit SHA
-- do not claim that a local WSL clone was updated when only the remote was changed
+1. Inspect `git status`, the current branch, and relevant local changes.
+2. Fetch or pull the latest remote state before editing when safe. Do not pull across uncommitted or divergent work without first resolving the situation with the user.
+3. Modify files in the local Codex project so the files Codex reads are the files being changed.
+4. Review `git diff` and verify the affected tracking documents, notes, and Socratic records in proportion to the change.
+5. Stage only the intended paths, use a clear commit message, and push the commit to GitHub.
+6. After pushing or merging, verify that the local and remote branch SHAs agree and report the changed files and resulting commit SHA.
 
-The user's WSL clone may not be directly accessible from the Codex Windows sandbox. This is an environment boundary, not evidence that the repository or clone failed.
+Prefer a `codex/` feature branch and pull request for substantial or risky changes. A direct push to the current branch is acceptable when the user explicitly requests it and the change is small, reviewed, and compatible with repository protections.
 
-After Codex modifies the GitHub remote directly, tell the user that the WSL clone can be synchronized with:
+Use the GitHub connector to modify repository files directly only when:
 
-```bash
-git pull
-```
+- the local clone is unavailable or inaccessible,
+- the user explicitly requests a remote-only change, or
+- the task concerns GitHub-native objects such as pull requests, reviews, issues, or comments.
 
-If the WSL clone contains uncommitted or divergent work, warn the user to inspect `git status` before pulling.
+If a remote-only file change is unavoidable, immediately synchronize the local Codex project afterward and verify the local and remote SHAs. Do not describe the local project as updated until that verification succeeds.
 
 ## Priority
 
