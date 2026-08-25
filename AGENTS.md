@@ -14,6 +14,12 @@ The learner has already developed a working conceptual understanding of:
 - sliding-window VIO
 - marginalization priors
 - the distinction between a local estimator and a global pose-graph backend
+- differential-drive kinematics and the relationships among wheel speeds, body linear velocity, yaw rate, and turning radius
+- wheel-encoder increments to SE(2) odometry integration
+- the nonholonomic lateral-velocity constraint and practical violations
+- wheel-odometry slip, calibration, and covariance-propagation failure modes
+
+The learner is currently extending the established SE(2) model to SO(3). Rotation-matrix geometry, axis-as-column interpretation, inverse/transpose, and noncommutativity are understood at a working introductory level. Body-fixed versus world-fixed rotation composition is not yet reliable and should be revisited through actual IMU integration rather than treated as completed.
 
 Read the repository notes before deciding whether any of these topics need review. Do not infer the current frontier only from status checkboxes or dates: older tracking documents may lag behind newer notes.
 
