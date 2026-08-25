@@ -45,13 +45,20 @@ The learner needs to apply SLAM to a ground robot. The curriculum should therefo
 
 ## Current Mental Model
 
-The learner currently understands SLAM roughly as:
+The learner now understands the estimation chain more concretely:
 
 ```text
-Sensors -> raw data -> estimator -> pose -> compare with previous data -> map
+Sensors
+→ geometric / physical measurement model
+→ relative-motion or landmark constraints
+→ residuals with covariance / information
+→ local state estimation or joint factor-graph optimization
+→ local drift
+→ global constraints such as loop closure
+→ trajectory and map correction
 ```
 
-This is a useful starting point but is incomplete. The missing concept is the geometric front-end that converts raw sensor observations into relative pose/measurement constraints, followed by estimation/optimization and mapping/back-end processing.
+For a differential-drive ground robot, the learner can connect wheel-encoder increments to body velocity, SE(2) pose integration, uncertainty propagation, and fusion with IMU / LiDAR.
 
 ## Known Strengths
 
@@ -61,6 +68,10 @@ This is a useful starting point but is incomplete. The missing concept is the ge
 - Understands that Bayesian estimation combines prior information and measurements.
 - Knows the existence and purpose of Kalman filters and ESKF.
 - Understands at a conceptual level why localization and mapping are coupled.
+- Understands SE(2) frame direction, transform composition, inverse, and relative pose.
+- Understands factor graphs through sparse Gauss-Newton structure, elimination, Schur complement, and marginalization.
+- Understands differential-drive kinematics, wheel odometry, nonholonomic assumptions, and major slip/calibration failure modes.
+- Can connect motion-model Jacobians to covariance propagation, especially yaw uncertainty to lateral position uncertainty.
 
 ## Important Corrected Misconceptions
 
@@ -72,4 +83,6 @@ This is a useful starting point but is incomplete. The missing concept is the ge
 
 ## Current Curriculum Position
 
-As of 2026-08-18, the learner has completed the initial diagnostic through Q14 and is about to continue with the pose/landmark relationship and SLAM formulation. Coordinate-frame and rigid-body transformation concepts are the first major formal topic.
+As of 2026-08-25, the learner has completed the ground-robot differential-drive and wheel-odometry foundation, including practical failure modes and first-order covariance propagation. The current topic is extending the established SE(2) frame model to SO(3), followed by SE(3).
+
+SO(3) rotation-matrix meaning, orthonormality, determinant, axis columns, inverse/transpose, and noncommutativity have introductory working understanding. Body-fixed versus world-fixed incremental rotation composition remains unresolved and should be revisited when gyro integration supplies a concrete implementation need.
