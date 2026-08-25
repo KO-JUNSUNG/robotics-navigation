@@ -131,6 +131,20 @@ Before modifying an existing Markdown file:
 
 If new material is a continuous refinement of an existing concept, update the relevant memo carefully. If it forms a distinct conceptual unit, create a separate note.
 
+## End-of-session handoff
+
+`NEXT-SESSION-PROMPT.md` is the reusable handoff prompt for the next learning session.
+
+When the user says `오늘 치 공부 끝났다. 다음 세션에서 이어서 할게.` or otherwise clearly ends the day's study session:
+
+1. Separate what became reliable, what remains partial, and what is unresolved.
+2. Update the relevant long-term memo, Socratic record, and tracking documents only where the learning evidence changed.
+3. Update `NEXT-SESSION-PROMPT.md` with the actual current frontier, the exact next prerequisite, useful retrieval questions, and topics that should not be repeated.
+4. Make the prompt self-contained enough to paste into a new Codex session, but require the next session to reconcile it against the repository documents rather than trusting it blindly.
+5. Follow the local-first Git workflow below, verify the resulting diff, commit, push, and report the final SHA.
+
+The user's end-of-session phrase authorizes these learning-document and handoff updates. Do not expand it into unrelated repository work.
+
 ## GitHub workflow
 
 The primary working copy is the Codex project opened at:
