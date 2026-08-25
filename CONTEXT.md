@@ -45,13 +45,20 @@ The learner needs to apply SLAM to a ground robot. The curriculum should therefo
 
 ## Current Mental Model
 
-The learner currently understands SLAM roughly as:
+The learner now understands the estimation chain more concretely:
 
 ```text
-Sensors -> raw data -> estimator -> pose -> compare with previous data -> map
+Sensors
+→ geometric / physical measurement model
+→ relative-motion or landmark constraints
+→ residuals with covariance / information
+→ local state estimation or joint factor-graph optimization
+→ local drift
+→ global constraints such as loop closure
+→ trajectory and map correction
 ```
 
-This is a useful starting point but is incomplete. The missing concept is the geometric front-end that converts raw sensor observations into relative pose/measurement constraints, followed by estimation/optimization and mapping/back-end processing.
+For a differential-drive ground robot, the learner can connect wheel-encoder increments to body velocity, SE(2) pose integration, uncertainty propagation, and fusion with IMU / LiDAR.
 
 ## Known Strengths
 
@@ -61,6 +68,14 @@ This is a useful starting point but is incomplete. The missing concept is the ge
 - Understands that Bayesian estimation combines prior information and measurements.
 - Knows the existence and purpose of Kalman filters and ESKF.
 - Understands at a conceptual level why localization and mapping are coupled.
+- Understands SE(2) frame direction, transform composition, inverse, and relative pose.
+- Understands factor graphs through sparse Gauss-Newton structure, elimination, Schur complement, and marginalization.
+- Understands differential-drive kinematics, wheel odometry, nonholonomic assumptions, and major slip/calibration failure modes.
+- Can connect motion-model Jacobians to covariance propagation, especially yaw uncertainty to lateral position uncertainty.
+- Understands SO(3) / SE(3) frame transformations, inverse transforms, and LiDAR extrinsic / lever-arm effects.
+- Understands accelerometer specific force, stationary versus free-fall measurements, and gravity-based roll/pitch but not yaw observability.
+- Understands gyro bias accumulation and why bias must be estimated as a changing state.
+- Understands the ESKF nominal/error-state architecture, injection/reset, covariance preservation, and Kalman-gain trust behavior.
 
 ## Important Corrected Misconceptions
 
@@ -69,7 +84,12 @@ This is a useful starting point but is incomplete. The missing concept is the ge
 - Kalman filtering and MAP estimation are closely related under particular assumptions, but should not be treated as universally identical.
 - Rotation inverse equals transpose because rotation matrices are orthonormal, not merely because a transformation should be one-to-one.
 - Odometry error does not universally grow as t^2; constant acceleration bias gives a t^2 position-error term, while other error sources have different behavior.
+- Free-fall accelerometer output is zero not because gravity disappears, but because the IMU accelerates with gravity and experiences no supporting specific force.
+- Resetting the ESKF error-state mean to zero after injection does not mean state uncertainty is zero; covariance must remain and be transformed consistently.
+- A large measurement residual does not make the measurement Jacobian large. Residual magnitude, sensitivity (H), state covariance (P), and measurement covariance (R) play different roles.
 
 ## Current Curriculum Position
 
-As of 2026-08-18, the learner has completed the initial diagnostic through Q14 and is about to continue with the pose/landmark relationship and SLAM formulation. Coordinate-frame and rigid-body transformation concepts are the first major formal topic.
+As of 2026-08-25, the learner has completed the ground-robot differential-drive / wheel-odometry foundation and the introductory SO(3) / SE(3) frame-transformation unit. LiDAR extrinsics, lever-arm effects, accelerometer specific force, gravity-based attitude observability, and body-frame gyro composition are understood conceptually.
+
+The learner has progressed into ESKF foundations: nominal versus error state, bias-state motivation, orientation-error injection on SO(3), error-mean reset, covariance preservation, Kalman gain, and overconfidence. The active frontier is how IMU propagation creates state cross-correlations and how wheel / LiDAR measurements use them to correct indirectly observed states such as gyro bias. Full ESKF Jacobians and implementation remain pending.

@@ -14,6 +14,22 @@ The learner has already developed a working conceptual understanding of:
 - sliding-window VIO
 - marginalization priors
 - the distinction between a local estimator and a global pose-graph backend
+- differential-drive kinematics and the relationships among wheel speeds, body linear velocity, yaw rate, and turning radius
+- wheel-encoder increments to SE(2) odometry integration
+- the nonholonomic lateral-velocity constraint and practical violations
+- wheel-odometry slip, calibration, and covariance-propagation failure modes
+
+The learner has also developed a working foundation in:
+
+- SO(3) rotation-matrix geometry, axis-as-column interpretation, inverse/transpose, determinant, and noncommutativity
+- SE(3) point transformation, composition, inverse, and frame-labeled sensor extrinsics
+- LiDAR lever-arm effects and the failure caused by treating a displaced sensor origin as the robot origin
+- accelerometer specific force, gravity-frame transformation, and why gravity constrains roll/pitch but not yaw
+- gyro bias accumulation and body-frame relative-rotation composition through `R_WI(k+1) = R_WI(k) R_IkI(k+1)`
+- the ESKF nominal/error-state distinction, bias states, correction injection/reset, and covariance versus error-mean distinction
+- Kalman-gain intuition, estimator overconfidence, and the difference between direct observation and correlation-mediated correction
+
+Do not assume that detailed Lie exponential calculations, full ESKF propagation/update Jacobians, or observability analysis are complete. The next frontier is understanding how IMU propagation creates cross-covariances—especially yaw-error/gyro-bias correlation—and how measurements use those correlations to correct indirectly observed states.
 
 Read the repository notes before deciding whether any of these topics need review. Do not infer the current frontier only from status checkboxes or dates: older tracking documents may lag behind newer notes.
 
