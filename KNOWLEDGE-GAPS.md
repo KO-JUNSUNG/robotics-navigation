@@ -46,12 +46,21 @@ This file tracks the learner's current understanding. It should be updated as mi
 - [x] Nonholonomic lateral-velocity constraint and practical violations
 - [x] Wheel slip, wheel-radius / wheelbase calibration errors, and multi-sensor disagreement
 - [x] First-order motion-model Jacobian and covariance-propagation intuition
+- [x] SO(3) matrix meaning, determinant, axis columns, inverse/transpose, and noncommutativity
+- [x] SE(3) point transformation, composition, inverse, and frame-labeled extrinsics
+- [x] LiDAR lever-arm effect and extrinsic-calibration failure intuition
+- [x] Accelerometer specific force, stationary / free-fall distinction, and gravity-frame transformation
+- [x] Gravity constrains roll/pitch but not yaw
+- [x] Gyro bias accumulation and body-frame relative-rotation composition
+- [x] ESKF nominal state versus small error state
+- [x] SO(3)-valid orientation-error injection and error-mean reset
+- [x] Error-state mean reset versus covariance preservation
+- [x] Kalman-gain trust intuition and estimator overconfidence
 
 ## Partially Known / Needs Reinforcement
 
-- [ ] SO(3) foundations — matrix meaning, determinant, axis columns, inverse, and noncommutativity are understood; body/world-fixed incremental composition needs reinforcement; SE(3) pending
-- [ ] EKF details
-- [ ] ESKF details
+- [ ] EKF implementation details and comparison with ESKF
+- [ ] ESKF propagation/update Jacobians, reset Jacobian, and implementation details
 - [ ] Levenberg-Marquardt
 - [ ] Visual-odometry scale ambiguity — central issue understood, but full geometry is pending
 - [ ] VIO architecture — sliding-window marginalization is understood, but measurement models, bias, initialization, and preintegration are pending
@@ -63,11 +72,10 @@ This file tracks the learner's current understanding. It should be updated as mi
 - [ ] Ground-robot motion models beyond ideal differential drive, including skid-steer parameterization
 - [ ] Practical wheel-encoder calibration procedures and parameter identification
 - [ ] Quantitative stochastic wheel-slip and odometry noise models
-- [ ] SO(3) rotation mathematics
-- [ ] SE(3) transformations
-- [ ] Robotics perturbation conventions and manifold updates
-- [ ] EKF / ESKF implementation-level reasoning
-- [ ] IMU measurement model and bias estimation
+- [ ] Detailed SO(3) exponential/log maps and perturbation conventions
+- [ ] Left/right perturbation conventions beyond the established frame-labeled body increment case
+- [ ] ESKF cross-covariance, indirect-state correction, observability, and consistency
+- [ ] Full IMU propagation model, accelerometer-bias effects, and online bias observability
 - [ ] LiDAR geometry
 - [ ] Scan matching and ICP
 - [ ] LiDAR odometry
@@ -122,8 +130,9 @@ Correction: a constant acceleration bias gives a `t^2` position-error term. Diff
 ## Current Focus
 
 ```text
-SO(3) rotation geometry
-→ SE(3) rigid-body transformation
-→ IMU / LiDAR frame applications
-→ revisit body-fixed rotation composition during gyro integration
+IMU propagation
+→ yaw-error / gyro-bias cross-covariance
+→ indirect bias correction from wheel / LiDAR updates
+→ ESKF observability and consistency
+→ concrete ground-robot fusion cycle
 ```
