@@ -41,13 +41,15 @@ This file tracks the learner's current understanding. It should be updated as mi
 - [x] Sliding-window VIO motivation and bounded-computation trade-off
 - [x] Distinction between a local estimator and a global pose-graph backend
 - [x] Gauge freedom and gauge fixing at a conceptual level
+- [x] Differential-drive kinematics: wheel speeds, body linear velocity, yaw rate, and turning radius
+- [x] Wheel-encoder increments to SE(2) pose integration using Euler / midpoint intuition
+- [x] Nonholonomic lateral-velocity constraint and practical violations
+- [x] Wheel slip, wheel-radius / wheelbase calibration errors, and multi-sensor disagreement
+- [x] First-order motion-model Jacobian and covariance-propagation intuition
 
 ## Partially Known / Needs Reinforcement
 
-- [ ] Ground-robot differential-drive kinematics — current frontier; turning direction and wheelbase intuition are present, but exact `v`, `omega` relationships and angular-velocity meaning need consolidation
-- [ ] Wheel odometry integration into an SE(2) pose
-- [ ] Wheel-odometry assumptions, covariance, systematic errors, and slip failure modes
-- [ ] SO(3) / SE(3) generalization from the established SO(2) / SE(2) model
+- [ ] SO(3) foundations — matrix meaning, determinant, axis columns, inverse, and noncommutativity are understood; body/world-fixed incremental composition needs reinforcement; SE(3) pending
 - [ ] EKF details
 - [ ] ESKF details
 - [ ] Levenberg-Marquardt
@@ -58,10 +60,9 @@ This file tracks the learner's current understanding. It should be updated as mi
 
 ## Critical Unresolved Gaps
 
-- [ ] Differential-drive and other ground-robot motion models
-- [ ] Nonholonomic constraints and when they fail
-- [ ] Wheel encoder measurement model and calibration
-- [ ] Wheel slip and odometry error models
+- [ ] Ground-robot motion models beyond ideal differential drive, including skid-steer parameterization
+- [ ] Practical wheel-encoder calibration procedures and parameter identification
+- [ ] Quantitative stochastic wheel-slip and odometry noise models
 - [ ] SO(3) rotation mathematics
 - [ ] SE(3) transformations
 - [ ] Robotics perturbation conventions and manifold updates
@@ -121,9 +122,8 @@ Correction: a constant acceleration bias gives a `t^2` position-error term. Diff
 ## Current Focus
 
 ```text
-Differential-drive wheel speeds
-→ robot-frame linear and angular velocity
-→ SE(2) pose integration
-→ wheel-odometry assumptions and failure modes
-→ probabilistic motion model / estimator connection
+SO(3) rotation geometry
+→ SE(3) rigid-body transformation
+→ IMU / LiDAR frame applications
+→ revisit body-fixed rotation composition during gyro integration
 ```
