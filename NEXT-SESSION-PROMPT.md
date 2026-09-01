@@ -1,6 +1,6 @@
 # Next Learning Session Prompt
 
-> Last updated: 2026-08-25
+> Last updated: 2026-09-01
 >
 > This file is a session handoff, not the sole source of truth. Reconcile it with `AGENTS.md`, tracking documents, recent topic memos, and the latest Socratic record before teaching.
 
@@ -32,17 +32,28 @@ Copy the prompt block below into a new Codex session opened on this repository.
 - ESKF nominal/error state, SO(3) correction injection, error-mean reset
 - covariance를 reset하지 않는 이유, Kalman-gain과 estimator overconfidence
 
+추가로 신뢰 가능해진 범위:
+
+- IMU propagation의 yaw-error / gyro-bias cross-covariance 생성
+- yaw-only wheel/LiDAR measurement의 indirect gyro-bias correction
+- cross-covariance와 observability의 구분
+- additive bias / multiplicative scale error와 excitation
+- measurement consistency, adaptive covariance, rejection, duplicate update failure
+- conceptual asynchronous IMU / wheel / LiDAR ESKF cycle
+- LiDAR scan frame, ICP correspondence, point-to-line normal, corridor degeneracy
+- repeated-structure local minima, scan deskew, LiDAR-to-robot extrinsic motion conversion
+
 현재 frontier:
 
-IMU propagation이 yaw error와 gyro-bias error 사이의 cross-covariance를 어떻게 만드는지, 그리고 wheel/LiDAR yaw measurement가 그 correlation을 통해 직접 측정하지 않은 gyro bias를 어떻게 간접 보정하는지 이해하는 단계다.
+LiDAR lever arm이 yaw uncertainty를 position uncertainty로 바꾸는 관계를 확인한 뒤, point-to-line ICP의 작은-pose linearization과 robust correspondence handling으로 진행하는 단계다.
 
 다음 학습 순서:
 
-1. 작은 개념적 또는 수치적 예제로 yaw-error/gyro-bias cross-covariance를 설명한다.
-2. H가 bias를 직접 측정하지 않아도 Kalman gain의 bias row가 non-zero가 될 수 있는 이유를 연결한다.
-3. 실제 회전과 bias를 구분하기 위한 excitation 및 observability를 다룬다.
-4. 과신된 covariance와 잘못된 wheel/LiDAR measurement가 consistency에 미치는 영향을 다룬다.
-5. 이해가 안정되면 concrete IMU + wheel + LiDAR ESKF propagation/update cycle로 확장한다.
+1. 직전 질문 \(r=0.2\,\mathrm m\), \(\sigma_\theta=0.1\,\mathrm{rad}\)에서 \(\sigma_p\approx r\sigma_\theta\)를 짧게 retrieval한다.
+2. point-to-line ICP residual을 작은 2D pose increment로 linearize하며 translation/yaw Jacobian의 물리적 의미를 설명한다.
+3. nearest-neighbor rejection, maximum correspondence distance, trimming, robust loss를 다룬다.
+4. convergence, overlap, residual, Hessian eigenstructure로 scan-matching quality와 degeneracy-aware covariance를 연결한다.
+5. LiDAR relative-pose measurement를 body frame과 timestamp에 맞춰 ESKF/factor graph에 넣는 방법으로 확장한다.
 
 다음 항목은 retrieval에서 실제 gap이 드러나지 않는 한 처음부터 반복하지 마라:
 
@@ -51,6 +62,8 @@ IMU propagation이 yaw error와 gyro-bias error 사이의 cross-covariance를 �
 - accelerometer stationary/free-fall 설명
 - 기본적인 ESKF nominal/error-state 및 injection/reset 설명
 - Schur complement와 marginalization
+- ESKF cross-covariance 수치 예제와 correlation/observability 구분
+- ICP frame 기본식, corridor normal intuition, deskew 필요성
 
 Skew matrix나 SO(3) exponential map의 손계산은 현재 learner의 관심사가 아니며, 구현상 필요할 때만 다시 다룬다.
 
@@ -61,20 +74,20 @@ Socratic 방식으로 시작하되 긴 강의부터 하지 마라. 먼저 2~3개
 
 ## Current handoff boundary
 
-The latest session ended immediately before a concrete explanation of:
+The latest session ended at the concrete relation:
 
 ```text
-gyro-bias error
-→ yaw propagation error
-→ yaw/bias cross-covariance
-→ wheel or LiDAR yaw residual
-→ indirect gyro-bias correction
+LiDAR lever arm r
+→ yaw uncertainty sigma_theta
+→ approximate position uncertainty sigma_p ≈ r sigma_theta
+→ covariance must be transformed with the extrinsic, not copied
 ```
 
 Primary references for the next session:
 
 - `notes/eskf-foundations-memo.md`
+- `notes/lidar-scan-matching-foundations-memo.md`
 - `notes/so3-se3-sensor-frames-memo.md`
-- `socratic/2026-08-25-ground-robot-kinematics-and-so3.md`
+- `socratic/2026-08-26-eskf-cross-covariance-and-lidar-scan-matching.md`
 - `KNOWLEDGE-GAPS.md`
 - `ROADMAP.md`

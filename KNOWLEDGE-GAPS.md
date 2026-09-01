@@ -56,11 +56,25 @@ This file tracks the learner's current understanding. It should be updated as mi
 - [x] SO(3)-valid orientation-error injection and error-mean reset
 - [x] Error-state mean reset versus covariance preservation
 - [x] Kalman-gain trust intuition and estimator overconfidence
+- [x] Yaw-error / gyro-bias cross-covariance generation through propagation
+- [x] Indirect gyro-bias correction through yaw-only measurement and cross-covariance
+- [x] Cross-covariance versus observability distinction
+- [x] Additive bias versus multiplicative scale-error excitation intuition
+- [x] Measurement consistency, adaptive covariance, rejection, and duplicate-update failure intuition
+- [x] Conceptual asynchronous IMU / wheel / LiDAR ESKF cycle
+- [x] LiDAR scan frames, relative transform, and non-index correspondence
+- [x] ICP local-optimization and initial-guess dependence
+- [x] Point-to-line normal and corridor degeneracy intuition
+- [x] Repeated-structure local minima versus continuous degeneracy
+- [x] Per-point LiDAR timestamp and deskew motivation
+- [x] LiDAR-relative to robot-relative pose extrinsic composition
 
 ## Partially Known / Needs Reinforcement
 
 - [ ] EKF implementation details and comparison with ESKF
 - [ ] ESKF propagation/update Jacobians, reset Jacobian, and implementation details
+- [ ] Point-to-line ICP linearization, Jacobians, and implementation details
+- [ ] Robust correspondence rejection and scan-matching quality metrics
 - [ ] Levenberg-Marquardt
 - [ ] Visual-odometry scale ambiguity — central issue understood, but full geometry is pending
 - [ ] VIO architecture — sliding-window marginalization is understood, but measurement models, bias, initialization, and preintegration are pending
@@ -74,11 +88,11 @@ This file tracks the learner's current understanding. It should be updated as mi
 - [ ] Quantitative stochastic wheel-slip and odometry noise models
 - [ ] Detailed SO(3) exponential/log maps and perturbation conventions
 - [ ] Left/right perturbation conventions beyond the established frame-labeled body increment case
-- [ ] ESKF cross-covariance, indirect-state correction, observability, and consistency
+- [ ] Formal multi-state ESKF observability and consistency analysis
 - [ ] Full IMU propagation model, accelerometer-bias effects, and online bias observability
-- [ ] LiDAR geometry
-- [ ] Scan matching and ICP
-- [ ] LiDAR odometry
+- [ ] Complete LiDAR geometry and sensor-specific failure modeling
+- [ ] Complete scan matching / ICP implementation
+- [ ] LiDAR odometry estimator integration
 - [ ] Camera model and calibration
 - [ ] Feature geometry and data association
 - [ ] Epipolar geometry
@@ -130,9 +144,9 @@ Correction: a constant acceleration bias gives a `t^2` position-error term. Diff
 ## Current Focus
 
 ```text
-IMU propagation
-→ yaw-error / gyro-bias cross-covariance
-→ indirect bias correction from wheel / LiDAR updates
-→ ESKF observability and consistency
-→ concrete ground-robot fusion cycle
+LiDAR lever-arm covariance check
+→ point-to-line ICP linearization
+→ correspondence rejection and robust loss
+→ scan-matching quality / degeneracy-aware covariance
+→ LiDAR odometry integration with ESKF and factor graph
 ```

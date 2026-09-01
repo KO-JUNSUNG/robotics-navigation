@@ -76,6 +76,8 @@ For a differential-drive ground robot, the learner can connect wheel-encoder inc
 - Understands accelerometer specific force, stationary versus free-fall measurements, and gravity-based roll/pitch but not yaw observability.
 - Understands gyro bias accumulation and why bias must be estimated as a changing state.
 - Understands the ESKF nominal/error-state architecture, injection/reset, covariance preservation, and Kalman-gain trust behavior.
+- Understands how IMU propagation creates yaw/gyro-bias cross-covariance, how yaw-only measurements indirectly correct bias, and why correlation is not observability.
+- Understands introductory 2D LiDAR scan geometry, ICP correspondence dependence, point-to-line normals, corridor degeneracy, deskew, and extrinsic conversion of LiDAR motion to robot motion.
 
 ## Important Corrected Misconceptions
 
@@ -90,6 +92,6 @@ For a differential-drive ground robot, the learner can connect wheel-encoder inc
 
 ## Current Curriculum Position
 
-As of 2026-08-25, the learner has completed the ground-robot differential-drive / wheel-odometry foundation and the introductory SO(3) / SE(3) frame-transformation unit. LiDAR extrinsics, lever-arm effects, accelerometer specific force, gravity-based attitude observability, and body-frame gyro composition are understood conceptually.
+As of 2026-09-01, the learner has completed the ground-robot differential-drive / wheel-odometry foundation and the introductory SO(3) / SE(3) frame-transformation unit. LiDAR extrinsics, lever-arm effects, accelerometer specific force, gravity-based attitude observability, and body-frame gyro composition are understood conceptually.
 
-The learner has progressed into ESKF foundations: nominal versus error state, bias-state motivation, orientation-error injection on SO(3), error-mean reset, covariance preservation, Kalman gain, and overconfidence. The active frontier is how IMU propagation creates state cross-correlations and how wheel / LiDAR measurements use them to correct indirectly observed states such as gyro bias. Full ESKF Jacobians and implementation remain pending.
+The learner has progressed through the ESKF cross-covariance and indirect-state-correction foundation, including observability versus correlation, excitation, measurement consistency, and an asynchronous propagation/update cycle. Full ESKF Jacobians and implementation remain pending. The active frontier is LiDAR scan matching: the conceptual geometry, ICP local behavior, degeneracy, deskew, and LiDAR-to-body extrinsic conversion are established; point-to-line linearization, robust correspondence handling, and estimator integration remain next.

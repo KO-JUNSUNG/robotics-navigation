@@ -11,10 +11,10 @@ Goal: build the theoretical and practical foundation required to design and appl
 | 2026-08-20 | 2 | SO(3), SE(3), rotation mathematics | Introductory SO(3) / SE(3) frame-transformation foundation completed |
 | 2026-08-21 | 3 | Ground robot kinematics, odometry, motion models | Completed for differential drive and wheel odometry foundation |
 | 2026-08-22 | 4 | Bayesian state estimation, MAP/MLE, Gaussian uncertainty | Conceptual foundation completed |
-| 2026-08-23 | 5 | Kalman Filter, EKF, ESKF | **ESKF conceptual foundation in progress; full propagation/update and observability pending** |
+| 2026-08-23 | 5 | Kalman Filter, EKF, ESKF | Cross-covariance, indirect bias correction, observability/consistency foundation completed; full Jacobians and implementation pending |
 | 2026-08-24 | 6 | Nonlinear least squares, Gauss-Newton, LM | Nonlinear least squares, linearization, and Gauss-Newton structure completed conceptually; LM pending |
 | 2026-08-25 | 7 | Factor graphs, pose graphs, constraints | Completed conceptually, including sparsity, elimination, and Schur complement |
-| 2026-08-26 | 8 | LiDAR geometry, scan matching, ICP, LiDAR odometry | Pending |
+| 2026-08-26 | 8 | LiDAR geometry, scan matching, ICP, LiDAR odometry | Conceptual scan geometry, ICP behavior, degeneracy, deskew, and extrinsic conversion in progress |
 | 2026-08-27 | 9 | Camera model, features, epipolar geometry | Pending |
 | 2026-08-28 | 10 | Visual odometry, triangulation, scale ambiguity | Scale-ambiguity intuition established; remaining topics pending |
 | 2026-08-29 | 11 | IMU + camera, VIO, bias, initialization, preintegration | Sliding-window marginalization understood conceptually; sensor model, initialization, and preintegration pending |
@@ -28,10 +28,10 @@ The next active prerequisite chain is:
 
 ```text
 completed differential-drive, SO(3), and introductory SE(3) foundations
-→ ESKF cross-covariance and indirect-state correction
-→ concrete IMU / wheel / LiDAR propagation-update cycle
-→ observability and consistency
-→ LiDAR geometry, scan matching, and ICP
+→ completed ESKF cross-covariance, indirect-state correction, observability/consistency foundation
+→ completed conceptual IMU / wheel / LiDAR propagation-update cycle
+→ LiDAR point-to-line ICP linearization and robust correspondence handling
+→ LiDAR odometry measurement integration
 ```
 
 The learner already has a working conceptual understanding of:
@@ -53,9 +53,9 @@ These topics should be connected briefly when useful rather than automatically r
 
 ## Near-term Sequence
 
-1. Complete ESKF cross-covariance, propagation/update, observability, and consistency using a concrete ground-robot fusion example.
-2. Study LiDAR geometry, scan matching, and ICP for a ground robot.
-3. Connect LiDAR odometry measurements to the ESKF and factor-graph viewpoints.
+1. Complete point-to-line ICP linearization, robust correspondence handling, and scan-matching quality evaluation.
+2. Connect LiDAR odometry measurements and covariance to the ESKF and factor-graph viewpoints.
+3. Return to full ESKF propagation/update Jacobians when implementation requires them.
 4. Build camera and visual-odometry prerequisites.
 5. Study IMU fusion, VIO / LIO, and practical SLAM architecture.
 6. Perform sensor/stack selection, experiment design, and capstone system design.

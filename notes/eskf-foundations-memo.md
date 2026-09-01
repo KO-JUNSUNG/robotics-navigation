@@ -304,7 +304,80 @@ gyro-bias error
 
 Bias를 measurement equation에 직접 넣지 않아도 correlation이 있으면 Kalman gain의 bias row가 non-zero가 될 수 있다.
 
-이 mechanism과 observability 조건은 다음 학습 frontier다.
+### 10.1 Minimal yaw / gyro-bias example
+
+Error convention을 다음처럼 둔다.
+
+\[
+\delta\psi=\psi_{\text{true}}-\hat\psi,
+\qquad
+\delta b_g=b_g-\hat b_g
+\]
+
+단순화한 propagation은:
+
+\[
+\begin{bmatrix}
+\delta\psi_{k+1}\\
+\delta b_{g,k+1}
+\end{bmatrix}
+=
+\begin{bmatrix}
+1&-\Delta t\\
+0&1
+\end{bmatrix}
+\begin{bmatrix}
+\delta\psi_k\\
+\delta b_{g,k}
+\end{bmatrix}
+\]
+
+이다. Bias를 실제보다 크게 추정하면 \(\delta b_g<0\)이고 corrected gyro rate가 너무 작아져 \(\delta\psi>0\)가 된다. 따라서 propagation은 음의 yaw/bias cross-covariance를 만든다.
+
+예를 들어:
+
+\[
+P_k=
+\begin{bmatrix}1&0\\0&4\end{bmatrix},
+\qquad \Delta t=1
+\]
+
+이고 process noise를 잠시 무시하면:
+
+\[
+P_{k+1}=FP_kF^\top
+=
+\begin{bmatrix}5&-4\\-4&4\end{bmatrix}
+\]
+
+이다. LiDAR가 yaw만 측정하여:
+
+\[
+H=\begin{bmatrix}1&0\end{bmatrix},
+\qquad R=1
+\]
+
+이어도:
+
+\[
+K
+=
+\frac{1}{6}
+\begin{bmatrix}5\\-4\end{bmatrix}
+\]
+
+이므로 bias gain이 non-zero다. 양의 yaw residual은 yaw를 증가시키는 동시에 과대 추정된 bias를 감소시킨다.
+
+Cross-covariance는 correction이 전달되는 통로이지 새로운 정보를 만드는 장치가 아니다. Gyro만으로는 constant true rotation과 constant bias를 구분할 수 없으며, wheel/LiDAR yaw, 신뢰 가능한 정지 조건 등 독립적인 reference가 필요하다.
+
+### 10.2 Excitation and observability
+
+Additive bias와 multiplicative scale error는 motion pattern으로 구분한다.
+
+- additive bias는 정지 중에도 남고 회전 방향이 바뀌어도 같은 signed offset을 만든다.
+- multiplicative scale error는 motion 크기에 비례하고 회전 방향이 바뀌면 signed error도 바뀐다.
+- 정지, 서로 다른 회전 속도, 좌/우 회전은 두 오류를 분리하는 유용한 excitation이다.
+- 두 센서의 disagreement만으로 어느 센서가 틀렸는지는 확정할 수 없으므로 제3의 reference나 추가 가정이 필요하다.
 
 ## 11. Consistency and failure handling
 
@@ -319,6 +392,12 @@ Bias를 measurement equation에 직접 넣지 않아도 correlation이 있으면
 - time synchronization and correct extrinsics
 - observability-aware state design
 
+Wheel slip이나 LiDAR registration failure를 작은 \(R\)로 강하게 반영하면 yaw뿐 아니라 cross-covariance를 통해 gyro bias도 오염될 수 있다. 동시에 covariance는 감소하여 틀린 상태를 강하게 확신하는 inconsistent estimator가 된다.
+
+Measurement 후 covariance를 갱신하지 않는 반대 오류도 문제다. Estimator가 이미 얻은 정보를 uncertainty에 기록하지 못해 후속 measurement를 과도하게 반영한다. 동일 timestamp의 measurement를 중복 처리하면 같은 noise realization을 독립 정보처럼 세어 평균을 과도하게 끌고 covariance를 부당하게 줄인다.
+
+실제 구현에서는 innovation covariance와 normalized innovation을 이용한 gating, sensor 간 일치성, motion의 물리적 한계, adaptive covariance 또는 rejection을 함께 사용한다.
+
 ## Current boundary
 
 현재 신뢰 가능한 범위:
@@ -330,6 +409,15 @@ Bias를 measurement equation에 직접 넣지 않아도 correlation이 있으면
 - Kalman-gain trust intuition
 - direct versus correlation-mediated correction concept
 
+이번 학습에서 추가로 확립:
+
+- yaw-error / gyro-bias cross-covariance가 \(FPF^\top\)에서 생기는 최소 수치 예제
+- yaw-only measurement의 \(H\)가 bias를 직접 포함하지 않아도 \(PH^\top\)가 bias gain을 만드는 이유
+- cross-covariance와 observability의 차이
+- additive bias와 multiplicative scale error를 분리하기 위한 excitation
+- 잘못된 measurement와 covariance 설정이 indirect correction을 오염시키는 consistency failure
+- asynchronous IMU propagation, wheel/LiDAR update, injection/reset의 개념적 실행 순서
+
 아직 미완료:
 
 - complete continuous/discrete IMU error dynamics
@@ -337,10 +425,9 @@ Bias를 measurement equation에 직접 넣지 않아도 correlation이 있으면
 - accelerometer-bias coupling details
 - reset Jacobian
 - measurement-specific \(H\)
-- cross-covariance numerical example
-- observability and consistency analysis
+- full-rank observability analysis
 - implementation in a ROS 2 / ground-robot stack
 
 ## Final mental model
 
-> ESKF는 IMU로 nominal state를 빠르게 propagation하면서 작은 Euclidean error state와 covariance를 추적한다. External measurement가 residual을 제공하면 error correction을 nominal state에 주입하고 error mean을 reset하되 uncertainty는 보존한다. Bias처럼 직접 측정되지 않는 state는 propagation 중 만들어진 cross-covariance를 통해 간접적으로 보정될 수 있으며, 이 과정의 observability와 consistency가 다음 핵심 과제다.
+> ESKF는 IMU propagation 중 state error 사이의 cross-covariance를 만들고, external measurement가 제공하는 독립적인 residual을 그 통로를 통해 직접 측정되지 않은 state에도 전달한다. Cross-covariance는 observability 자체가 아니며, excitation과 외부 reference가 실제 구별 정보를 제공한다. 잘못된 measurement나 covariance는 같은 통로로 bias까지 오염시킬 수 있으므로 consistency 검사가 필수다.
